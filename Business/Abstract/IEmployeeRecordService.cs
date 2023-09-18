@@ -13,14 +13,14 @@ namespace Business.Abstract
     public interface IEmployeeRecordService
     {
         IDataResult<List<EmployeeRecord>> GetAll();
-        IDataResult<List<EmployeeRecord>> GetByName(string name);
+        IDataResult<List<EmployeeRecord>> GetByName(int Id);
         IDataResult<List<EmployeeRecord>> GetByCardId(int cardId);
         IDataResult<List<EmployeeRecord>> GetAllByWorkingHour(TimeSpan min, TimeSpan max);
-        IDataResult<List<PersonalEmployeeDto>> GetPersonalDetails(string name); 
+        IDataResult<List<PersonalEmployeeDto>> GetPersonalDetails(int Id); 
         IResult Add(IFormFile file);
         IResult Delete(int id);
         public IResult DeleteByDateRange(DateTime startDate, DateTime endDate);
         public IResult GetAverageHour(string name,double averageHour);
-
+        IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week);
     }
 }

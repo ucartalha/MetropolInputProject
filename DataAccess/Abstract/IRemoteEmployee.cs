@@ -12,7 +12,7 @@ namespace DataAccess.Abstract
     public interface IRemoteEmployee:IEntityRepository<RemoteEmployee>
     {
         public List<CombinedDataDto> GetAllWithLogs();
-        public List<int> GetDurationByName(string name, int month);
+        public List<int> GetDurationByName(int Id, int month, int year, List<int> result);
 
     }
 }

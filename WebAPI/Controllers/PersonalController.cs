@@ -14,9 +14,9 @@ namespace WebAPI.Controllers
                 _services = personalService;
         }
         [HttpGet("process-monthly-average")]
-        public IActionResult ProcessMonthlyAverage(string name, int month)
+        public IActionResult ProcessMonthlyAverage(int Id, int month, int year)
         {
-            var result = _services.ProcessMonthlyAverage(name, month);
+            var result = _services.ProcessMonthlyAverage(Id, month, year);
 
             if (result.Success)
             {
@@ -26,6 +26,17 @@ namespace WebAPI.Controllers
             {
                 return BadRequest(result.Message); // Hata durumunda hata mesajını döndür
             }
+        }
+
+        [HttpGet("get-all-employees")]
+        public IActionResult GetAllEmployees()
+        {
+            var result = _services.GetAllEmployees();
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result.Message);
         }
     }
 }

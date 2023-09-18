@@ -18,7 +18,7 @@ namespace Entities.Concrete
         public string Sirket { get; set; }
         public string Department { get; set; }
         public string blok { get; set; }
-        public int RemoteEmployeeId { get; set; }
+        public int? RemoteEmployeeId { get; set; }
         public DateTime Date { get; set; }
         public DateTime FirstRecord { get; set; }
         public DateTime LastRecord { get; set; }

@@ -10,7 +10,7 @@ namespace Business.Abstract
 {
     public interface IOverShifService
     {
-        public IDataResult<List<OverShift>> ProcessShiftPrice(string name, int month, int year);
+        public IDataResult<List<OverShift>> ProcessShiftPrice(int Id, int month, int year);
         //public IDataResult<List<OverShift>> ProcessShiftPriceByMonth(int month, int year);
         //public IDataResult<List<(string Name, int TotalCount)>> GetOverShiftCountByEmployee(int month, int year);
         public IDataResult<List<OverShift>> ProcessShiftPriceAllWorkers(int month, int year);

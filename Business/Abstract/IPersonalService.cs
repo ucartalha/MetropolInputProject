@@ -11,6 +11,7 @@ namespace Business.Abstract
     public interface IPersonalService
     { 
         IDataResult<List<Personal>> GetAll();
-        public IDataResult<List<Personal>> ProcessMonthlyAverage(string name,int month);
+        public IDataResult<List<Personal>> ProcessMonthlyAverage(int Id, int month, int year);
+        public IDataResult<List<RemoteEmployee>> GetAllEmployees();
     }
 }

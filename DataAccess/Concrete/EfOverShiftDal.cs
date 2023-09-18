@@ -28,11 +28,11 @@ namespace DataAccess.Concrete
             _employeeRecordDal = employeeRecordDal;
             _remoteRecordDal = remoteWorkEmployeeDal;
         }
-        public IDataResult<List<OverShift>> ProcessShiftPrice(string name, int month, int year)
+        public IDataResult<List<OverShift>> ProcessShiftPrice(int Id, int month, int year)
         {
             using (InputContext context = new InputContext())
             {
-                var result = GetEmployeeDetail(name, month, year).ToList();
+                var result = GetEmployeeDetail(Id, month, year).ToList();
                 if (result != null && result.Any())
                 {
                     List<OverShift> overShiftList = new List<OverShift>();
@@ -49,7 +49,8 @@ namespace DataAccess.Concrete
 
                             overShiftList.Add(new OverShift
                             {
-                                Name = name,
+                                Id=Id,
+                                Name=dto.Name,
                                 ShiftDuration = dto.Duration.HasValue ? dto.Duration.Value : 0,
                                 OfficeDate = dto.OfficeDate.HasValue ? Convert.ToDateTime(dto.OfficeDate) : DateTime.MinValue,
                                 RemoteDate = dto.RemoteDate.HasValue ? Convert.ToDateTime(dto.RemoteDate) : DateTime.MinValue,
@@ -59,19 +60,19 @@ namespace DataAccess.Concrete
                         }
                     }
 
-                    if (overShiftList.Any())
-                    {
-                        context.OverShifts.AddRange(overShiftList);
-                        context.SaveChanges();
+                    //if (overShiftList.Any())
+                    //{
+                    //    context.OverShifts.AddRange(overShiftList);
+                    //    //context.SaveChanges();
 
-                        return new SuccessDataResult<List<OverShift>>(overShiftList, "OverShift tablosu güncellendi.");
-                    }
-
+                    //    return new SuccessDataResult<List<OverShift>>(overShiftList, "OverShift tablosu güncellendi.");
+                    //}
+                    return new SuccessDataResult<List<OverShift>>(overShiftList, "OverShift tablosu güncellendi.");
                 }
                 return new ErrorDataResult<List<OverShift>>(overShiftList);
             }
         }
-        public List<PersonalOverShiftDto> GetEmployeeDetail(string Name, int month, int year)
+        public List<PersonalOverShiftDto> GetEmployeeDetail(int Id, int month, int year)
         {
             using (InputContext context = new InputContext())
             {
@@ -79,35 +80,36 @@ namespace DataAccess.Concrete
                 List<PersonalOverShiftDto> personalOverShiftDtoList = new List<PersonalOverShiftDto>();
 
 
+                 
                 var remote = context.EmployeeDtos
-      .Where(x => x.FirstName.Contains(Name))
-      .Join(
-          context.ReaderDataDtos
-              .Where(readerData => readerData.StartDate != null && readerData.StartDate.Value.Month == month && readerData.StartDate.Value.Year == year),
-          employee => employee.Id,
-          readerData => readerData.EmployeeDtoId,
-          (employee, readerData) => new
-          {
-              employee.FirstName,
-              readerData.Duration,
-              StartDate = readerData.StartDate.HasValue ? readerData.StartDate.Value : default(DateTime)
-          })
-      .GroupBy(dto => new { dto.FirstName, dto.StartDate.Date })
-      .Select(group => new PersonalOverShiftDto
-      {
-          Name = group.Key.FirstName,
-          Duration = group.Sum(dto => dto.Duration ?? 0),
-          OfficeDate = null,
-          RemoteDate = group.Key.Date,
-          ShiftHour = null
-      })
-      .ToList();
-
-
+                 .Where(x => x.Id == Id) // ID'ye göre filtreleme
+                 .Join(
+                     context.ReaderDataDtos
+                         .Where(readerData => readerData.StartDate != null && readerData.StartDate.Value.Month == month && readerData.StartDate.Value.Year == year),
+                     employee => employee.Id,
+                     readerData => readerData.EmployeeDtoId,
+                     (employee, readerData) => new
+                     {
+                         employee.FirstName,
+                         readerData.Duration,
+                         StartDate = readerData.StartDate.HasValue ? readerData.StartDate.Value : default(DateTime)
+                     })
+                 .GroupBy(dto => new { dto.FirstName, dto.StartDate.Date })
+                 .Select(group => new PersonalOverShiftDto
+                 {
+                     Name = group.Key.FirstName,
+                     Duration = group.Sum(dto => dto.Duration ?? 0),
+                     OfficeDate = null,
+                     RemoteDate = group.Key.Date,
+                     ShiftHour = null
+                 })
+                 .ToList();
 
                 personalOverShiftDtoList.AddRange(remote);
 
-                var office = context.EmployeeRecords.Where(x => x.Name == Name && x.Date.Month == month && x.Date.Year == year).Select(x => new PersonalOverShiftDto
+                
+
+                var office = context.EmployeeRecords.Where(x => x.RemoteEmployeeId == Id && x.Date.Month == month && x.Date.Year == year).Select(x => new PersonalOverShiftDto
                 {
                     Name = x.Name,
                     Duration = null,

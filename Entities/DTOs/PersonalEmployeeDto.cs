@@ -9,7 +9,8 @@ namespace Entities.DTOs
 {
     public class PersonalEmployeeDto:IDto
     {
-        public string FullName { get; set; }
+        public int Id { get; set; }
+        public string? FullName { get; set; }
 
         public int? RemoteDuration { get; set; }
         public TimeSpan? WorkingHour { get; set; }

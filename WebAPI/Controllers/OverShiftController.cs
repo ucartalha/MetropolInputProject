@@ -13,9 +13,9 @@ namespace WebAPI.Controllers
             _services = service;
         }
         [HttpGet("getovershift")]
-        public IActionResult GetOverShift(string name, int month, int year)
+        public IActionResult GetOverShift(int Id, int month, int year)
         {
-            var result = _services.ProcessShiftPrice(name, month, year);
+            var result = _services.ProcessShiftPrice(Id, month, year);
             if (result.Success)
             {
                 return Ok(result);

@@ -18,7 +18,7 @@ namespace DataAccess.Concrete
         {
             _employeeRecordDal = employeeRecordDal;
         }
-        public IDataResult<List<Personal>> ProcessMonthlyAverage(string name, int month)
+        public IDataResult<List<Personal>> ProcessMonthlyAverage(int Id, int month, int year)
         {
             List<TimeSpan> workingHours = new List<TimeSpan>();
             for (int i = 2; i >= 0; i--)
@@ -29,7 +29,7 @@ namespace DataAccess.Concrete
                 {
                     targetMonth += 12;
                 }
-                workingHours.AddRange(_employeeRecordDal.GetWorkingHoursByName(name, targetMonth));
+                workingHours.AddRange(_employeeRecordDal.GetWorkingHoursByName(Id, targetMonth,year));
             }
             DateTime date = new DateTime(DateTime.Now.Year, month, 1);
 
@@ -41,7 +41,7 @@ namespace DataAccess.Concrete
                     TimeSpan monthlyAverage = TimeSpan.FromTicks((long)monthlyAverageTicks);
 
                     Personal personal = new Personal();
-                    personal.Name = name;
+                    personal.Id = Id;
                     personal.AverageHour = monthlyAverage;
                     personal.Date = date;
 

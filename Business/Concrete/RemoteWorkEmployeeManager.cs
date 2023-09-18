@@ -124,7 +124,8 @@ namespace Business.Concrete
 
                                 var Response = new RemoteDtos
                                 {
-                                    FullName = firstName+" " + lastName,
+                                    FirstName = firstName,
+                                    LastName = lastName,
                                     EventID = eventValue,
                                     LogDate = logDate
                                 };
@@ -162,16 +163,16 @@ namespace Business.Concrete
 
                             for (int i = 0; i < remoteEmployees.Count; i++)
                             {
-                                if (!string.IsNullOrEmpty(remoteEmployees[i].FullName))
+                                if (!string.IsNullOrEmpty(remoteEmployees[i].FirstName) && !string.IsNullOrEmpty(remoteEmployees[i].LastName))
                                 {
-                                    var employee = denden.FirstOrDefault(d => d.FirstName == remoteEmployees[i].FullName);
+                                    var employee = denden.FirstOrDefault(d => d.FirstName == remoteEmployees[i].FirstName);
 
                                     if (employee == null)
                                     {
                                         employee = new RemoteEmployee
                                         {
-                                            FirstName = remoteEmployees[i].FullName,
-                                            LastName = remoteEmployees[i].FullName,
+                                            FirstName = remoteEmployees[i].FirstName,
+                                            LastName = remoteEmployees[i].LastName,
                                             ReaderDataDtos = new List<ReaderDataDto>()
                                         };
                                         denden.Add(employee);
@@ -236,7 +237,7 @@ namespace Business.Concrete
 
                             foreach (var employeeDto in denden)
                             {
-                                var existingEmployee = _dbContext.EmployeeDtos.FirstOrDefault(e => e.FirstName == employeeDto.FirstName);
+                                var existingEmployee = _dbContext.EmployeeDtos.FirstOrDefault(e => e.FirstName == employeeDto.FirstName && e.LastName ==employeeDto.LastName);
 
                                 if (existingEmployee == null)
                                 {

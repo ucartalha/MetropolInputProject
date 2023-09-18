@@ -17,10 +17,10 @@ namespace Business.Concrete
         {
             _overDal = overShiftDal;
         }
-        public IDataResult<List<OverShift>> ProcessShiftPrice(string name, int month, int year)
+        public IDataResult<List<OverShift>> ProcessShiftPrice(int Id, int month, int year)
         {
 
-            var result = _overDal.ProcessShiftPrice(name, month, year);
+            var result = _overDal.ProcessShiftPrice(Id, month, year);
             if (result.Success)
             {
                 return new SuccessDataResult<List<OverShift>>(result.Data);

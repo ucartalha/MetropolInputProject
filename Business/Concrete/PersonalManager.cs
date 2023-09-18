@@ -28,6 +28,10 @@ namespace Business.Concrete
                 return new SuccessDataResult<List<Personal>>(_personalDal.GetAll());            
         }
 
+        public IDataResult<List<RemoteEmployee>> GetAllEmployees()
+        {
+            return new SuccessDataResult<List<RemoteEmployee>>(_remoteEmployee.GetAll());
+        }
         //public IDataResult<Personal> ProcessMonthlyAverage(string name, int month)
         //{
         //    // İlgili aydaki çalışma saatlerini getir
@@ -60,7 +64,7 @@ namespace Business.Concrete
         //        return new ErrorDataResult<Personal>("İsimle eşleşen çalışma saatleri bulunamadı.");
         //    }
         //}
-        public IDataResult<List<Personal>> ProcessMonthlyAverage(string name, int month)
+        public IDataResult<List<Personal>> ProcessMonthlyAverage(int Id, int month, int year)
         {
             List<Personal> personalList = new List<Personal>();
             DateTime currentDate = DateTime.Now;
@@ -79,7 +83,8 @@ namespace Business.Concrete
                 previousMonth2 += 12;
                 currentYear--;
             }
-
+            List<int> result = new List<int>();
+            int resultIndex = 0;
             for (int i = 0; i < 3; i++)
             {
                 int targetMonth = month - i;
@@ -87,10 +92,12 @@ namespace Business.Concrete
                 {
                     targetMonth += 12;
                 }
+                result = _remoteEmployee.GetDurationByName(Id, targetMonth, year, result);
+                List<TimeSpan> workingHours = _employeeDal.GetWorkingHoursByName(Id, targetMonth, year);
 
-                List<TimeSpan> workingHours = _employeeDal.GetWorkingHoursByName(name, targetMonth);
+                
 
-                if (workingHours.Count > 0)
+                if (workingHours.Count() >  0 || result.Count() > 0 )
                 {
                     // Ay içindeki toplam süreyi hesapla
                     TimeSpan totalHours = TimeSpan.Zero;
@@ -100,30 +107,46 @@ namespace Business.Concrete
                     }
 
                     // Ortalama saat hesapla
-                    TimeSpan monthlyAverage = TimeSpan.FromTicks(totalHours.Ticks / workingHours.Count);
-
-                    List<int> duration = _remoteEmployee.GetDurationByName(name, targetMonth);
-                    int totalDuration = 0;
-
-                    if (duration.Count > 0)
+                    
+                    TimeSpan monthlyAverage = default(TimeSpan);
+                    if (totalHours.Ticks != 0 || workingHours.Count() != 0)
                     {
-                        foreach (int second in duration)
+                        monthlyAverage = TimeSpan.FromTicks(totalHours.Ticks / workingHours.Count);
+
+                    }
+                    //Personal personal = new Personal();
+                    List<int> totalDuration = new List<int>();
+                    List<int> monthlyDuration = new List<int>();
+
+
+                    while (resultIndex < result.Count)
+                    {
+                        Personal personal = new Personal
                         {
-                            totalDuration += second;
-                        }
+                            Id = Id,
+                            AverageHour = monthlyAverage,
+                            RemoteHour = result[resultIndex],
+                            Date = new DateTime(currentYear, targetMonth, 1)
+                        };
+
+                        personalList.Add(personal);
+                        resultIndex++;
                     }
 
-                    int averageDuration = duration.Count > 0 ? totalDuration / duration.Count : 0;
+
+
+
 
 
                     // Personal nesnesini oluştur ve verileri doldur
-                    Personal personal = new Personal();
-                    personal.Name = name;
-                    personal.AverageHour = monthlyAverage;
-                    personal.RemoteHour = averageDuration;
-                    personal.Date = new DateTime(currentYear, targetMonth, 1);
 
-                    personalList.Add(personal);
+                    //personal.Id = Id;
+                    //    personal.AverageHour = monthlyAverage;
+                    //    personal.RemoteHour = averageDuration != 0 ? averageDuration : 0;
+                    //    personal.Date = new DateTime(currentYear, targetMonth, 1);
+
+                    //    personalList.Add(personal);
+
                 }
             }
 
@@ -137,5 +160,6 @@ namespace Business.Concrete
                 return new ErrorDataResult<List<Personal>>("İsimle eşleşen çalışma saatleri bulunamadı.");
             }
         }
+
     }
 }

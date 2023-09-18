@@ -10,7 +10,7 @@ namespace Entities.Concrete
     public class Personal:IEntity
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public TimeSpan AverageHour { get; set; }
         public int RemoteHour { get; set; }
         public DateTime? Date { get; set; }

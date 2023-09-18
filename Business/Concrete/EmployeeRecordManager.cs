@@ -4,6 +4,7 @@ using Core.Entities;
 using Core.Utilites.Helpers;
 using Core.Utilites.Results;
 using Core.Utilities.Helpers.FileHelper;
+using Core.Extensions;
 using DataAccess.Abstract;
 using DataAccess.Concrete;
 using Entities.Concrete;
@@ -32,13 +33,13 @@ namespace Business.Concrete
         IFileHelper _fileHelper;
         private readonly InputContext _dbContext;
         IUploadedFilesDal _uploadedFilesDal;
-        public EmployeeRecordManager(IEmployeeRecordDal employeeDal,IExcelRepository<EmployeeRecord> excelRepository, IFileHelper fileHelper, InputContext dbContext,IUploadedFilesDal uploadedFilesDal)
+        public EmployeeRecordManager(IEmployeeRecordDal employeeDal, IExcelRepository<EmployeeRecord> excelRepository, IFileHelper fileHelper, InputContext dbContext, IUploadedFilesDal uploadedFilesDal)
         {
             _employeeDal = employeeDal;
             _excelRepository = excelRepository;
             _fileHelper = fileHelper;
-            _uploadedFilesDal= uploadedFilesDal;
-            _dbContext= dbContext;
+            _uploadedFilesDal = uploadedFilesDal;
+            _dbContext = dbContext;
         }
         public IResult Add(IFormFile file)
         {
@@ -53,8 +54,8 @@ namespace Business.Concrete
             // Dosya yolu
             //string filePath = Path.Combine(PathToExcel.ExcelPath, fileName);
 
-           
-                if (file != null && file.Length > 0)
+
+            if (file != null && file.Length > 0)
             {
                 using (var stream = new MemoryStream())
                 {
@@ -68,7 +69,7 @@ namespace Business.Concrete
                                                                           // Diğer yapılandırma seçeneklerini de burada belirleyebilirsiniz
                     };
 
-                    using (var reader = ExcelReaderFactory.CreateReader(stream, configuration)) 
+                    using (var reader = ExcelReaderFactory.CreateReader(stream, configuration))
                     {
                         var records = new List<EmployeeRecord>();
 
@@ -76,7 +77,7 @@ namespace Business.Concrete
                         {
                             try
                             {
-                                
+
                                 var cardIdValue = reader.GetValue(1);
                                 if (cardIdValue == null || string.IsNullOrEmpty(cardIdValue.ToString()))
                                 {
@@ -85,13 +86,13 @@ namespace Business.Concrete
                                 // Verileri Excel'den okuyarak nesnelere dönüştürme
 
                                 var cardID = reader.GetValue(1) != null ? Convert.ToInt32(reader.GetValue(1)) : 0;
-                                var name = reader.GetValue(2) != null ? reader.GetString(2) : string.Empty;
-                                var surName = reader.GetValue(3) != null ? reader.GetString(3) : string.Empty;
+                                var name = reader.GetValue(2) != null ? TransoformTurkishChars.ConvertTurkishChars(reader.GetString(2)) : string.Empty;
+                                var surName = reader.GetValue(3) != null ? TransoformTurkishChars.ConvertTurkishChars(reader.GetString(3)) : string.Empty;
                                 var sirket = reader.GetValue(4) != null ? reader.GetString(4) : string.Empty;
                                 var department = reader.GetValue(5) != null ? reader.GetString(5) : string.Empty;
                                 var blok = reader.GetValue(6) != null ? reader.GetString(6) : string.Empty;
 
-                                var date = reader.GetValue(7) != null ? Convert.ToDateTime( reader.GetValue(7)) : DateTime.MinValue;
+                                var date = reader.GetValue(7) != null ? Convert.ToDateTime(reader.GetValue(7)) : DateTime.MinValue;
 
                                 var firstRecord = reader.GetValue(8) != null ? Convert.ToDateTime(reader.GetValue(8)) : DateTime.MinValue;
                                 var lastRecord = reader.GetValue(9) != null ? Convert.ToDateTime(reader.GetValue(9)) : DateTime.MinValue;
@@ -103,35 +104,41 @@ namespace Business.Concrete
                                 //var workingHour = TimeSpan.Parse(hh);
 
                                 //TimeSpan workingHour = TimeSpan.Zero;
-
-
-                                var matchingRemoteId = GetByFullName(name, surName);
-                                if (IsValidEmployeeRecord(lastRecord).Success) { 
-                                records.Add(new EmployeeRecord
+                                if (name.Contains(" "))
                                 {
-                                    CardId = cardID,
-                                    Name = name,
-                                    SurName = surName,
-                                    Sirket = sirket,
-                                    Department = department,
-                                    blok = blok,
-                                    Date = date,
-                                    FirstRecord = firstRecord,
-                                    LastRecord = lastRecord,
-                                    WorkingHour = workingHour,
-                                    RemoteEmployeeId=matchingRemoteId.Id
-                                });
+                                    var nameParts = name.Split(' ');
+                                    var nameFirst = nameParts[0];
+                                    name = nameFirst; // İlk ismi tekrar name'e atıyoruz
+                                    // Diğer işlemleri burada yapabilirsiniz
+                                }
+                                var matchingRemoteId = GetByFullName(name, surName);
+                                if (IsValidEmployeeRecord(lastRecord).Success)
+                                {
+                                    records.Add(new EmployeeRecord
+                                    {
+                                        CardId = cardID,
+                                        Name = name,
+                                        SurName = surName,
+                                        Sirket = sirket,
+                                        Department = department,
+                                        blok = blok,
+                                        Date = date,
+                                        FirstRecord = firstRecord,
+                                        LastRecord = lastRecord,
+                                        WorkingHour = workingHour,
+                                        RemoteEmployeeId = matchingRemoteId.Id
+                                    });
                                 }
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
-                                new ErrorResult("hata burada"+ex);
+                                new ErrorResult("hata burada" + ex);
                             }
                         }
                         var existingRecords = new List<EmployeeRecord>();
                         existingRecords = _employeeDal.GetAll();
                         var distinctRecords = records
-                            .GroupBy(r => new { r.CardId, r.Name, r.SurName, r.WorkingHour, r.Department, r.FirstRecord, r.LastRecord, r.Date })
+                            .GroupBy(r => new { r.CardId, r.Name, r.SurName, r.WorkingHour, r.Department, r.FirstRecord, r.LastRecord, r.Date, r.RemoteEmployeeId })
                             .Select(g => g.First())
                             .ToList();
 
@@ -144,7 +151,8 @@ namespace Business.Concrete
                                 er.Department == r.Department &&
                                 er.FirstRecord == r.FirstRecord &&
                                 er.LastRecord == r.LastRecord &&
-                                er.Date == r.Date
+                                er.Date == r.Date &&
+                                er.RemoteEmployeeId == r.RemoteEmployeeId
                             ))
                             .ToList();
                         foreach (var empRecord in recordsToAdd)
@@ -167,9 +175,16 @@ namespace Business.Concrete
                         {
                             return new ErrorResult("Dosya zaten var.");
                         }
-
-                        _dbContext.UploadedFiles.Add(uploadedFile);
-                        _dbContext.SaveChanges();
+                        if (existingFile!=null)
+                        {
+                            _dbContext.UploadedFiles.Add(uploadedFile);
+                            _dbContext.SaveChanges();
+                        }
+                        else
+                        {
+                            return new ErrorResult("Dosya zaten var.");
+                        }
+                        
 
                         return new SuccessResult("Excel file has been processed successfully.");
                     }
@@ -197,7 +212,7 @@ namespace Business.Concrete
         private IResult IsValidEmployeeRecord(DateTime lastRecord)
         {
             var result = _employeeDal.GetAll(c => c.LastRecord == lastRecord);
-            if (!result.Any(c => c.LastRecord.Month == lastRecord.Month||c.LastRecord.Year==lastRecord.Year))
+            if (!result.Any(c => c.LastRecord.Month == lastRecord.Month || c.LastRecord.Year == lastRecord.Year))
             {
                 return new SuccessResult("Employee record not found."); // Hata durumunu döndür
             }
@@ -222,9 +237,9 @@ namespace Business.Concrete
         {
             List<EmployeeRecord> records = _employeeDal.GetAll();
             List<EmployeeRecord> filteredRecords = records.Where(r => r.WorkingHour >= min && r.WorkingHour <= max)
-                .OrderBy(r=>r.WorkingHour)
+                .OrderBy(r => r.WorkingHour)
                 .ToList();
-                
+
 
             if (filteredRecords.Count > 0)
             {
@@ -238,28 +253,28 @@ namespace Business.Concrete
 
         public IDataResult<List<EmployeeRecord>> GetByCardId(int cardId)
         {
-            return new SuccessDataResult<List<EmployeeRecord>>(_employeeDal.GetAll(r=> r.CardId==cardId));
+            return new SuccessDataResult<List<EmployeeRecord>>(_employeeDal.GetAll(r => r.CardId == cardId));
         }
 
-        public IDataResult<List<PersonalEmployeeDto>> GetPersonalDetails(string name)
+        public IDataResult<List<PersonalEmployeeDto>> GetPersonalDetails(int Id)
         {
-            return new SuccessDataResult<List<PersonalEmployeeDto>>(_employeeDal.GetEmployeeDetail(name)); 
+            return new SuccessDataResult<List<PersonalEmployeeDto>>(_employeeDal.GetEmployeeDetail(Id));
         }
 
         public IResult DeleteByDateRange(DateTime startDate, DateTime endDate)
         {
-            endDate =endDate.AddDays(1);
-                var deleteResult = _employeeDal.DeleteByDateRange(startDate, endDate);
-                //date: ay gün yıl olarak geliyor onu düzelt!
-                if (deleteResult.Success)
-                {
-                    return new SuccessResult("Belirtilen tarih aralığındaki veriler başarıyla silindi.");
-                }
-                else
-                {
-                    return new ErrorResult("Belirtilen tarih aralığındaki verileri silerken bir hata oluştu.");
-                }
-            
+            endDate = endDate.AddDays(1);
+            var deleteResult = _employeeDal.DeleteByDateRange(startDate, endDate);
+            //date: ay gün yıl olarak geliyor onu düzelt!
+            if (deleteResult.Success)
+            {
+                return new SuccessResult("Belirtilen tarih aralığındaki veriler başarıyla silindi.");
+            }
+            else
+            {
+                return new ErrorResult("Belirtilen tarih aralığındaki verileri silerken bir hata oluştu.");
+            }
+
             //DateTime startOfMonth = new DateTime(startDate.Year, startDate.Month,1);
             //DateTime endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
@@ -276,12 +291,12 @@ namespace Business.Concrete
             //    {
             //        return new ErrorResult("Ayın verilerini silerken bir hata oluştu.");
             //    }
-        //}
-        //    catch (Exception ex)
-        //    {
-                
-        //        return new ErrorResult($"Ayın verilerini silerken bir hata oluştu: {ex.Message}");
-        //    }
+            //}
+            //    catch (Exception ex)
+            //    {
+
+            //        return new ErrorResult($"Ayın verilerini silerken bir hata oluştu: {ex.Message}");
+            //    }
         }
 
         public IResult GetAverageHour(string name, double averageHour)
@@ -307,15 +322,68 @@ namespace Business.Concrete
 
         }
 
-        public IDataResult<List<EmployeeRecord>> GetByName(string name)
+        public IDataResult<List<EmployeeRecord>> GetByName(int Id)
         {
-            return new SuccessDataResult<List<EmployeeRecord>>(_employeeDal.GetAll(e => e.Name==name));
+            return new SuccessDataResult<List<EmployeeRecord>>(_employeeDal.GetAll(e => e.RemoteEmployeeId == Id));
         }
-
+        //string.Equals(e.FirstName, firstName, StringComparison.OrdinalIgnoreCase) && string.Equals(e.LastName, lastName, StringComparison.OrdinalIgnoreCase) || 
         private RemoteEmployee GetByFullName(string firstName, string lastName)
         {
-            return _dbContext.EmployeeDtos.FirstOrDefault(e =>
-                e.FirstName == firstName && e.LastName == lastName);
+            var result = _dbContext.EmployeeDtos.FirstOrDefault(e =>
+             e.FirstName.Contains(firstName) && e.LastName.Contains(lastName));
+
+            if (result == null)
+            {
+                // Eğer veri bulunamazsa, yeni bir RemoteEmployee nesnesi oluşturup kaydet
+                var newEmployee = new RemoteEmployee
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    // Diğer özellikleri de gerekirse burada tanımlayabilirsiniz
+                };
+
+                _dbContext.EmployeeDtos.Add(newEmployee);
+                _dbContext.SaveChanges(); // Değişiklikleri veritabanına kaydet
+
+                return newEmployee;
+            }
+
+            // Eğer veri bulunursa mevcut RemoteEmployee nesnesini döndür
+            return result;
+        }
+
+        public IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week)
+        {
+            var result = _employeeDal.GetLates(month, week);
+            
+            if (result != null && result.Count > 0)
+            {
+                foreach (var group in result)
+                {
+                    string message = GetMessageForProcessTemp(group.ProcessTemp);
+                    group.Message = message;
+                }
+                return new SuccessDataResult<List<LateEmployeeGroupDto>>(result, "Geç Kalanlar Listelendi");
+            }
+            return new ErrorDataResult<List<LateEmployeeGroupDto>>("Geç kalan veya 11.30 saatten az çalışan çalışan yok");
+        }
+
+        private string GetMessageForProcessTemp(int processTemp)
+        {
+            // ProcessTemp değerine göre uygun mesajı döndüren bir fonksiyon ekleyin
+            switch (processTemp)
+            {
+                case 1:
+                    return "geç kaldı fakat tam çalıştı";
+                case 2:
+                    return "geç kaldı ve 9:30 saatten az çalıştı";
+                case 3:
+                    return "geç kalmadı ama 9:30 saatten az çalıştı";
+                case 4:
+                    return "geç kalmadı ve tam çalıştı";
+                default:
+                    return "Bilinmeyen ProcessTemp";
+            }
         }
     }
 }

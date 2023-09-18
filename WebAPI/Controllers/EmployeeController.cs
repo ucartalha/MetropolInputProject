@@ -19,9 +19,9 @@ namespace WebAPI.Controllers
          
 
         [HttpGet("getdetails")] 
-        public IActionResult Get(string name)
+        public IActionResult Get(int Id)
         {
-            var result=_services.GetPersonalDetails(name);
+            var result=_services.GetPersonalDetails(Id);
             if (result.Success)
             {
                 return Ok(result);
@@ -35,7 +35,9 @@ namespace WebAPI.Controllers
             try
             {
                 ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+                
                 _services.Add(file);
+                
                 return Ok("File uploaded successfully.");
             }
             catch (ArgumentNullException ex)
@@ -47,6 +49,11 @@ namespace WebAPI.Controllers
                 // Hata durumunda ilgili işlemleri gerçekleştirin (örn. hata loglama)
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while uploading the file: {ex.Message}");
             }
+        }
+        private bool DosyaZatenVar(string dosyaAdi)
+        {
+            
+            return false; // Dosya yoksa varsayılan olarak false döndürüldü.
         }
 
         [HttpPost("deletebydate")]
@@ -69,15 +76,78 @@ namespace WebAPI.Controllers
             return BadRequest();
         }
         [HttpGet("getbyname")]
-        public IActionResult GetByName(string name)
+        public IActionResult GetByName(int Id)
         {
-            var result = _services.GetByName(name);
+            var result = _services.GetByName(Id);
             if (result.Success)
             {
                 return Ok(result);
             }
             return BadRequest();
         }
+        [HttpGet("getlates")]
+        public IActionResult GetLates(int month,int week)
+        {
+            var result = _services.GetLates(month, week);
+            //if (result != null && result.Data != null && result.Data.Count > 0)
+            //{
+            //    var responseList = new List<object>();
+
+            //    foreach (var employee in result.Data)
+            //    {
+            //        if (employee.IsLate && !employee.IsFullWork)
+            //        {
+            //            responseList.Add(new
+            //            {
+            //                Id=employee.Id,
+            //                FullName = employee.FullName,
+            //                Date=employee.FirstRecord,
+            //                WorkingHour = employee.WorkingHour,
+            //                Message = $"{employee.FullName} geç kaldı ve 9:30 saatten az çalıştı."
+            //            });
+            //        }
+            //        if (employee.IsFullWork && employee.IsLate)
+            //        {
+            //            responseList.Add(new
+            //            {
+            //                Id = employee.Id,
+            //                FullName = employee.FullName,
+            //                Date = employee.FirstRecord,
+            //                WorkingHour=employee.WorkingHour,
+            //                Message = $"{employee.FullName} Geç kaldı fakat tam çalıştı"
+            //            });
+            //        }
+            //        if (!employee.IsLate && !employee.IsFullWork)
+            //        {
+            //            responseList.Add(new
+            //            {
+            //                Id = employee.Id,
+            //                FullName = employee.FullName,
+            //                Date = employee.FirstRecord,
+            //                WorkingHour = employee.WorkingHour,
+            //                Message = $"{employee.FullName} Zamanında geldi fakat 9:30 saatten az çalıştı"
+            //            });
+            //        }
+            //        // Diğer durumlar için benzer şekilde ekleme yapabilirsiniz
+            //    }
+
+            //    return Ok(new
+            //    {
+            //        Data = responseList,
+            //        Message = "Geç Kalanlar Listelendi"
+            //    });
+            //}
+            //return NotFound(new
+            //{
+            //    Message = "Geç kalan veya 11:30 saatten az çalışan çalışan yok"
+            //});
+            if (result.Success)
+            {
+                return Ok(new {Message=result.Message, Data=result.Data});
+            }
+            return BadRequest(result);
+        }
+
     }
 }
 

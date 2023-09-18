@@ -12,7 +12,7 @@ namespace DataAccess.Abstract
 {
     public interface IPersonalDal:IEntityRepository<Personal>
     {
-        public IDataResult<List<Personal>> ProcessMonthlyAverage(string name, int month);
+        public IDataResult<List<Personal>> ProcessMonthlyAverage(int Id, int month, int year);
         
     }
 }
