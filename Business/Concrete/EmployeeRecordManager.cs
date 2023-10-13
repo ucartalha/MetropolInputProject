@@ -116,7 +116,7 @@ namespace Business.Concrete
                                 {
                                     records.Add(new EmployeeRecord
                                     {
-                                        CardId = cardID,
+                                        CardId = cardID, 
                                         Name = name,
                                         SurName = surName,
                                         Sirket = sirket,
@@ -352,9 +352,9 @@ namespace Business.Concrete
             return result;
         }
 
-        public IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week)
+        public IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week,int year)
         {
-            var result = _employeeDal.GetLates(month, week);
+            var result = _employeeDal.GetLates(month, week, year);
             
             if (result != null && result.Count > 0)
             {

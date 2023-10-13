@@ -4,7 +4,7 @@ using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Office.Interop.Excel;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;

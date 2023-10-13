@@ -4,7 +4,7 @@ using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Office.Interop.Excel;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -143,12 +143,12 @@ namespace DataAccess.Concrete
             }
         }
 
-        public List<LateEmployeeGroupDto> GetLates(int month, int week)
+        public List<LateEmployeeGroupDto> GetLates(int month, int week, int year)
         {
             using (InputContext context=new InputContext())
             {
-                var lateEmployees = context.EmployeeRecords.Where(x => x.Date.Month == month).ToList();
-                DateTime currentDate = new DateTime(DateTime.Now.Year, month, 1);
+                var lateEmployees = context.EmployeeRecords.Where(x => x.Date.Month == month && x.Date.Year==year).ToList();
+                DateTime currentDate = new DateTime(year, month, 1);
 
                 // Hafta başlangıç ve bitiş tarihlerini hesapla
                 DateTime startOfWeek = currentDate.AddDays((week - 1) * 7 - (int)currentDate.DayOfWeek + (int)DayOfWeek.Monday);
@@ -254,6 +254,21 @@ namespace DataAccess.Concrete
 
                 return groupedLateEmployees;
 
+
+            }
+        }
+
+        public void UpdateById(int id, string NewName)
+        {
+            using (InputContext context= new InputContext())
+            {
+                var selectedPersonal = context.EmployeeRecords.FirstOrDefault(x => x.ID == id);
+                if (selectedPersonal != null)
+                {
+                    selectedPersonal.Name = NewName;
+
+                    context.SaveChanges();
+                }
 
             }
         }

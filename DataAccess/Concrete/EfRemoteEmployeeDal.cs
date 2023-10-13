@@ -23,7 +23,7 @@ namespace DataAccess.Concrete
                              on emp.Id equals rdr.EmployeeDtoId
                              select new CombinedDataDto
                              {
-                                Id=emp.Id,
+                                Id=rdr.Id,
                                 FirstName=emp.FirstName,
                                 LastName=emp.LastName,
                                 StartDate=rdr.StartDate, 

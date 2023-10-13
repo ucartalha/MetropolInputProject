@@ -18,7 +18,9 @@ namespace DataAccess.Abstract
         public List<PersonalEmployeeDto> GetEmployeeDetail(int Id);
 
         public List<TimeSpan> GetWorkingHoursByName(int Id,int month,int year);
-        public List<LateEmployeeGroupDto> GetLates(int month,int week);
+        public List<LateEmployeeGroupDto> GetLates(int month,int week,int year);
+
+        public void UpdateById(int id,string NewName);
        
     }
 }

@@ -86,9 +86,9 @@ namespace WebAPI.Controllers
             return BadRequest();
         }
         [HttpGet("getlates")]
-        public IActionResult GetLates(int month,int week)
+        public IActionResult GetLates(int month,int week, int year)
         {
-            var result = _services.GetLates(month, week);
+            var result = _services.GetLates(month, week, year);
             //if (result != null && result.Data != null && result.Data.Count > 0)
             //{
             //    var responseList = new List<object>();

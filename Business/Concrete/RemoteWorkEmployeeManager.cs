@@ -157,7 +157,8 @@ namespace Business.Concrete
                         }
                         try
                         {
-                            var existingEmployeesDictionary = _dbContext.EmployeeDtos.ToDictionary(e => e.FirstName, e => e);
+                            var existingEmployeesDictionary = _dbContext.EmployeeDtos.ToDictionary(e => e.FirstName + "_" + e.LastName, e => e);
+
 
                             var denden = new List<RemoteEmployee>();
 
@@ -374,7 +375,72 @@ namespace Business.Concrete
             return new SuccessDataResult<List<CombinedDataDto>>(_remoteEmployeeDal.GetAllWithLogs());
         }
 
-        
+        public IResult UpdateReaderData(int readerDataId, DateTime? newStartDate, DateTime? newEndDate)
+        {
+            try
+            {
+                // Veritabanından ilgili ReaderDataDto'yu buluyoruz
+                var readerDataDto = _dbContext.ReaderDataDtos.FirstOrDefault(rd => rd.Id == readerDataId);
+                if (readerDataDto == null)
+                {
+                    return new ErrorResult("Veri bulunamadı.");
+                }
+                if (newStartDate.HasValue && newEndDate.HasValue && newEndDate.Value < newStartDate.Value)
+                {
+                    return new ErrorResult("Bitiş tarihi, başlama tarihinden önce olamaz.");
+                }
+
+                // Değişiklikleri yapıyoruz
+                if (newStartDate.HasValue)
+                {
+                    readerDataDto.StartDate = newStartDate;
+                }
+
+                if (newEndDate.HasValue)
+                {
+                    readerDataDto.EndDate = newEndDate;
+                }
+
+                // ReaderDataDto için bir değişiklik yapıldı mı diye kontrol ediyoruz
+                var entry = _dbContext.ChangeTracker.Entries<ReaderDataDto>().FirstOrDefault(e => e.Entity == readerDataDto);
+
+                if (entry != null && entry.OriginalValues[nameof(ReaderDataDto.EndDate)] != entry.CurrentValues[nameof(ReaderDataDto.EndDate)])
+                {
+                    var startDateToUse = newStartDate.HasValue ? newStartDate.Value : readerDataDto.StartDate.Value;
+
+                    if (readerDataDto.EndDate.HasValue)
+                    {
+                        TimeSpan duration = readerDataDto.EndDate.Value - startDateToUse;
+                        readerDataDto.Duration = (int)duration.TotalSeconds;
+                    }
+                }
+
+                // Eğer StartDate özelliği değiştirildiyse, Duration'ı güncelliyoruz
+                if (entry != null && entry.OriginalValues[nameof(ReaderDataDto.StartDate)] != entry.CurrentValues[nameof(ReaderDataDto.StartDate)])
+                {
+                    DateTime? endDateToUse = newEndDate.HasValue ? newEndDate : readerDataDto.EndDate;
+
+                    if (endDateToUse.HasValue && readerDataDto.StartDate.HasValue)
+                    {
+
+                        TimeSpan duration = endDateToUse.Value - readerDataDto.StartDate.Value;
+                        readerDataDto.Duration = (int)duration.TotalSeconds;
+                    }
+                }
+
+
+                // Değişiklikleri kaydediyoruz
+                _dbContext.SaveChanges();
+
+                return new SuccessResult("Veri başarıyla güncellendi.");
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResult($"Bir hata oluştu: {ex.Message}");
+            }
+        }
+
+
 
 
 
