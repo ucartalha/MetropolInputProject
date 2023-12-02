@@ -64,7 +64,7 @@ namespace WebAPI.Controllers
             return BadRequest(new { success = false, message = result.Message });
         }
             catch {
-                return BadRequest(new { success = false, message = "Bir hata oluştu: " + ex.Message });
+                return BadRequest(new { success = false, message = "Bir hata oluştu: "});
             }
             }
     }

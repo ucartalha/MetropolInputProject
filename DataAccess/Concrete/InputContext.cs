@@ -13,7 +13,7 @@ namespace DataAccess.Concrete
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=SSK;Database=InputProject;TrustServerCertificate=True;Trusted_Connection=true;MultipleActiveResultSets=true",options=>options.MigrationsAssembly("DataAccess"));
+            optionsBuilder.UseSqlServer(@"Server=DESKTOP-4KV7ID6;Database=InputProject;TrustServerCertificate=True;Trusted_Connection=true;MultipleActiveResultSets=true", options=>options.MigrationsAssembly("DataAccess"));
         }
 
         public DbSet<EmployeeRecord> EmployeeRecords { get; set; }

@@ -75,5 +75,75 @@ namespace DataAccess.Concrete
 
             }
         }
+        public void UpdateDataForSameId()
+        {
+            using (InputContext context = new InputContext())
+            {
+                var previousDayDataWithStartDateOnly = context.ReaderDataDtos
+                  .Where(rd => rd.StartDate != null && rd.EndDate == null) // Önceki günün verilerini bulur: StartDate var, EndDate yok
+                  .ToList();
+
+                foreach (var item in previousDayDataWithStartDateOnly)
+                {
+                    var previousDayData = context.ReaderDataDtos.FirstOrDefault(rd =>
+                      rd.EmployeeDtoId == item.EmployeeDtoId && // Çalışanın verilerini alırken Employee ID'sini kontrol etmek önemli
+                      rd.StartDate == null && rd.EndDate != null &&
+                      rd.EndDate.Value.Date.AddDays(-1) == item.StartDate.Value.Date);
+
+                    if (previousDayData != null)
+                    {
+                        // Eğer önceki günün datalarında StartDate var ve EndDate yoksa, yeni gelen verinin EndDate değerini ata
+                        previousDayData.StartDate = item.StartDate;
+                        var duration = (int)(previousDayData.EndDate.Value - item.StartDate.Value).TotalSeconds;
+                        previousDayData.Duration = duration;
+                        context.Remove(item);
+                        // Duration hesaplama veya diğer işlemler burada yapılabilir
+                    }
+                }
+
+                context.SaveChanges();
+            }
+        }
+
+        private static ReaderDataDto CombineData(ReaderDataDto previousDayData, ReaderDataDto currentDayData)
+        {
+            return new ReaderDataDto
+            {
+                EmployeeDtoId = previousDayData.EmployeeDtoId,
+                StartDate = previousDayData.StartDate,
+                EndDate = currentDayData.EndDate,
+                // Diğer alanları da burada kopyalayabilir veya ayarlayabilirsiniz.
+            };
+        }
+
+
+
+
+        public void DeleteEntryWithStartDateOnly()
+        {
+            using (InputContext context = new InputContext())
+            {
+                var allEmployees = context.EmployeeDtos
+                    .Include(e => e.ReaderDataDtos)
+                    .ToList();
+
+                foreach (var employee in allEmployees)
+                {
+                    var entriesWithStartDateOnly = employee.ReaderDataDtos
+                        .Where(rd => rd.StartDate != null && rd.EndDate != null) // Başlangıç ve bitiş tarihine sahip olanları filtrele
+                        .GroupBy(rd => rd.StartDate) // Başlangıç tarihine göre grupla
+                        .SelectMany(grp => grp.Skip(1)) // İkinci tarihi olan girişten başlayarak
+                        .ToList();
+
+                    foreach (var entry in entriesWithStartDateOnly)
+                    {
+                        context.ReaderDataDtos.Remove(entry);
+                    }
+                }
+
+                context.SaveChanges();
+            }
+        }
+
     }
 }

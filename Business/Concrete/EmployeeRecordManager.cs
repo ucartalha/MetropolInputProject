@@ -385,5 +385,21 @@ namespace Business.Concrete
                     return "Bilinmeyen ProcessTemp";
             }
         }
+
+        public IDataResult<List<LateEmployeeGroupDto>> GetLatesByMonth(int month, int year)
+        {
+            var result = _employeeDal.GetLatesByMonth(month, year);
+
+            if (result != null && result.Count > 0)
+            {
+                foreach (var group in result)
+                {
+                    string message = GetMessageForProcessTemp(group.ProcessTemp);
+                    group.Message = message;
+                }
+                return new SuccessDataResult<List<LateEmployeeGroupDto>>(result, "Geç Kalanlar Listelendi");
+            }
+            return new ErrorDataResult<List<LateEmployeeGroupDto>>("Geç kalan veya 11.30 saatten az çalışan çalışan yok");
+        }
     }
 }

@@ -13,5 +13,6 @@ namespace DataAccess.Abstract
     {
         public List<int> GetDurationByName(string name, int month);
         public List<CombinedDataDto> GetCombinedData();
+        
     }
 }

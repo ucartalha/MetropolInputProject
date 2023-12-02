@@ -13,6 +13,7 @@ namespace DataAccess.Abstract
     {
         public List<CombinedDataDto> GetAllWithLogs();
         public List<int> GetDurationByName(int Id, int month, int year, List<int> result);
-
+        public void UpdateDataForSameId();
+        public void DeleteEntryWithStartDateOnly();
     }
 }

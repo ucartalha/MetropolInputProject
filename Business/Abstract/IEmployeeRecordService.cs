@@ -22,5 +22,6 @@ namespace Business.Abstract
         public IResult DeleteByDateRange(DateTime startDate, DateTime endDate);
         public IResult GetAverageHour(string name,double averageHour);
         IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week, int year);
+        IDataResult<List<LateEmployeeGroupDto>> GetLatesByMonth(int month, int year);
     }
 }

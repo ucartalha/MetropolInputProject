@@ -21,6 +21,6 @@ namespace DataAccess.Abstract
         public List<LateEmployeeGroupDto> GetLates(int month,int week,int year);
 
         public void UpdateById(int id,string NewName);
-       
+        public List<LateEmployeeGroupDto> GetLatesByMonth(int month, int year);
     }
 }

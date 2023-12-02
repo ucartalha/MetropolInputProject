@@ -257,8 +257,141 @@ namespace DataAccess.Concrete
 
             }
         }
+        public List<LateEmployeeGroupDto> GetLatesByMonth(int month, int year)
+        {
+            using (InputContext context = new InputContext())
+            {
+                var lateEmployees = context.EmployeeRecords.Where(x => x.Date.Month == month && x.Date.Year == year).ToList();
+                int daysInMonth = DateTime.DaysInMonth(year, month);
+                DateTime currentDate = new DateTime(year, month, 1);
+                DateTime lastDayofMonth = new DateTime(year, month, daysInMonth);
+                // Hafta başlangıç ve bitiş tarihlerini hesapla
+                //DateTime startOfWeek = currentDate.AddDays((week - 1) * 7 - (int)currentDate.DayOfWeek + (int)DayOfWeek.Monday);
+                //DateTime endOfWeek = startOfWeek.AddDays(6);
+                var StartingTime = TimeSpan.Parse("08:30:00");
+                // Geç kalanları haftanın başlangıç ve bitiş tarihlerine göre filtrele
+                var lateEmployeesInMonth = lateEmployees
+                    .Where(x => x.Date >= currentDate && x.Date <= lastDayofMonth)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        FullName = e.Name + " " + e.SurName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        Id = e.RemoteEmployeeId,
+                        WorkingHour = e.WorkingHour,
+                        IsLate = false,
+                        IsFullWork = true,
+                    })
+                    .ToList();
 
-        public void UpdateById(int id, string NewName)
+                var lateEmployeesAfter8AM = lateEmployeesInMonth //geç kaldı fakat tam çalıştı
+     .Where(x => x.FirstRecord != null && x.FirstRecord.TimeOfDay > StartingTime && x.WorkingHour.TotalMinutes > 570)
+     .Select(e => new LateEmployeeDto
+     {
+         Id = e.Id,
+         FullName = e.FullName,
+         FirstRecord = e.FirstRecord,
+         LastRecord = e.LastRecord,
+         WorkingHour = e.WorkingHour,
+         // O günün tarihini al
+         IsLate = true, // Geç kaldığı için IsLate'i true yap
+         IsFullWork = true, // Tam olarak çalıştılar
+         ProcessTemp = 1
+     })
+     .ToList();
+
+                var employeesLessThan1130Mins = lateEmployeesInMonth //geç kaldı tam çalışmadı
+                    .Where(x => x.WorkingHour.TotalMinutes < 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay > StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = true, // Geç kalmadılar ama çalışma süresi yetersiz
+                        IsFullWork = false, // 9:30'dan az çalıştılar
+                        ProcessTemp = 2
+                    })
+                    .ToList();
+
+                var employeesLessWorkMins = lateEmployeesInMonth //geç kalmadı ama tam çalıştı
+                    .Where(x => x.WorkingHour.TotalMinutes < 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay < StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        LastOfDate = e.LastOfDate,
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = false, // Geç kalmadılar ama çalışma süresi yetersiz
+                        IsFullWork = false, // 9:30'dan az çalıştılar
+                        ProcessTemp = 3
+
+                    })
+                    .ToList();
+
+                var employeeSuccess = lateEmployeesInMonth
+                    .Where(x => x.WorkingHour.TotalMinutes > 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay < StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        LastOfDate = e.LastOfDate,
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = false,
+                        IsFullWork = true,
+                        ProcessTemp = 4
+                    }).ToList();
+
+                // İki kategoriyi ayrı ayrı listelerde tutun
+                var lateAndShortWorkEmployees = new List<LateEmployeeDto>();
+                lateAndShortWorkEmployees.AddRange(lateEmployeesAfter8AM);
+                lateAndShortWorkEmployees.AddRange(employeesLessThan1130Mins);
+                lateAndShortWorkEmployees.AddRange(employeesLessWorkMins);
+                lateAndShortWorkEmployees.AddRange(employeeSuccess);
+
+                var groupedLateEmployees = lateAndShortWorkEmployees
+        .GroupBy(e => e.ProcessTemp)
+        .Select(group => new LateEmployeeGroupDto
+        {
+            ProcessTemp = group.Key,
+            Employees = group.ToList()
+        })
+        .ToList();
+
+                
+                return groupedLateEmployees;
+
+
+            }
+        }
+        private Dictionary<int, int> CalculateTotalHoursById(List<LateEmployeeGroupDto> groupedLateEmployees)
+        {
+            var totalsById = new Dictionary<int, int>();
+
+            foreach (var group in groupedLateEmployees)
+            {
+                foreach (var employee in group.Employees)
+                {
+                    if (!totalsById.ContainsKey(employee.Id.Value))
+                    {
+                        totalsById[employee.Id.Value] = 0;
+                    }
+
+                    
+                }
+            }
+            return totalsById;
+        }
+            public void UpdateById(int id, string NewName)
         {
             using (InputContext context= new InputContext())
             {

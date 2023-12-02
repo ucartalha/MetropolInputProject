@@ -24,7 +24,7 @@ namespace Business.Concrete
         
         IRemoteEmployee _remoteEmployeeDal;
         InputContext _dbContext;
-        public RemoteWorkEmployeeManager(IRemoteEmployee remoteEmployee, InputContext context)
+        public RemoteWorkEmployeeManager(IRemoteEmployee remoteEmployee,  InputContext context )
         {
             
             _remoteEmployeeDal = remoteEmployee;
@@ -95,16 +95,7 @@ namespace Business.Concrete
                                 {
                                     // Uygun olmayan format durumunda işlemler yapılabilir.
                                 }
-                                // Ad ve soyad değişkenlerini tanımlıyoruz
-                                //var firstName = string.Empty;
-                                //var lastName = string.Empty;
-                                //var userValue = reader.GetValue(2);
-                                //if (userValue != null)
-                                //{
-                                //    var nameComponents = userValue.ToString().Split('.');
-                                //    firstName = nameComponents.Length > 0 ? nameComponents[0] : "";
-                                //    lastName = nameComponents.Length > 1 ? nameComponents[1] : "";
-                                //}
+                             
 
 
                                 // Süre hesaplama için gerekli değişkenleri tanımlıyoruz
@@ -202,43 +193,33 @@ namespace Business.Concrete
                                             }
                                             else
                                             {
-                                                employee.ReaderDataDtos.Add(new ReaderDataDto
+                                                // Get previous day's data
+                                                var previousDayData = employee.ReaderDataDtos.FirstOrDefault(d => d.EndDate != null && d.StartDate == null && d.EndDate.Value.Date == remoteEmployees[i].LogDate.Value.Date.AddDays(-1));
+
+                                                if (previousDayData != null)
                                                 {
-                                                    StartDate = null,
-                                                    Duration = null,
-                                                    EndDate = remoteEmployees[i].LogDate
-                                                });
+                                                    previousDayData.StartDate = remoteEmployees[i].LogDate.Value.AddDays(-1);
+                                                }
+                                                else
+                                                {
+                                                    employee.ReaderDataDtos.Add(new ReaderDataDto
+                                                    {
+                                                        StartDate = null,
+                                                        Duration = null,
+                                                        EndDate = remoteEmployees[i].LogDate
+                                                    });
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
 
-                            foreach (var employeeDto in denden)
-                            {
-                                if (existingEmployeesDictionary.TryGetValue(employeeDto.FirstName, out var existingEmployee))
-                                {
-                                    foreach (var readerDataDto in employeeDto.ReaderDataDtos)
-                                    {
-                                        if (readerDataDto.StartDate.HasValue && !readerDataDto.EndDate.HasValue)
-                                        {
-                                            var existingReaderData = existingEmployee.ReaderDataDtos.FirstOrDefault(rd => rd.StartDate == readerDataDto.StartDate);
 
-                                            if (existingReaderData != null)
-                                            {
-                                                
-                                                readerDataDto.EndDate = readerDataDto.StartDate.Value.Date.Add(new TimeSpan(23, 59, 59));
-                                                existingReaderData.Duration = (int)(readerDataDto.EndDate - readerDataDto.StartDate).Value.TotalSeconds;
-                                                
-                                            }
-                                        }
-                                    }
-                                }
-                            }
 
                             foreach (var employeeDto in denden)
                             {
-                                var existingEmployee = _dbContext.EmployeeDtos.FirstOrDefault(e => e.FirstName == employeeDto.FirstName && e.LastName ==employeeDto.LastName);
+                                var existingEmployee = _dbContext.EmployeeDtos.FirstOrDefault(e => e.FirstName == employeeDto.FirstName && e.LastName == employeeDto.LastName);
 
                                 if (existingEmployee == null)
                                 {
@@ -253,61 +234,88 @@ namespace Business.Concrete
 
                                 foreach (var readerDataDto in employeeDto.ReaderDataDtos)
                                 {
-                                    var existingReaderData = existingEmployee.ReaderDataDtos.FirstOrDefault(rd => rd.StartDate == readerDataDto.StartDate);
 
-                                    if (existingReaderData != null)
+                                    // Eksik StartDate veya EndDate durumlarında, varsayılan olarak null ata
+                                    if (!readerDataDto.StartDate.HasValue && readerDataDto.EndDate.HasValue)
                                     {
-                                        existingReaderData.EndDate = readerDataDto.EndDate;
-                                        existingReaderData.Duration = readerDataDto.StartDate.HasValue && readerDataDto.EndDate.HasValue
-                                            ? (int)(readerDataDto.EndDate.Value - readerDataDto.StartDate.Value).TotalSeconds
-                                            : 0;
+                                        existingEmployee.ReaderDataDtos.Add(new ReaderDataDto
+                                        {
+                                            StartDate = null,
+                                            EndDate = readerDataDto.EndDate,
+                                            Duration = null
+                                        });
+                                        continue;
                                     }
-                                    else if (readerDataDto.StartDate.HasValue && !readerDataDto.EndDate.HasValue)
+
+                                    if (!readerDataDto.EndDate.HasValue && readerDataDto.StartDate.HasValue)
                                     {
-                                        var defaultEndDate = readerDataDto.StartDate.Value.Date.Add(new TimeSpan(23, 59, 59)); // Varsayılan saat 23:59:59
-                                        var newReaderData = new ReaderDataDto
+                                        existingEmployee.ReaderDataDtos.Add(new ReaderDataDto
                                         {
                                             StartDate = readerDataDto.StartDate,
-                                            EndDate = defaultEndDate,
-                                            Duration = (int)(defaultEndDate-readerDataDto.StartDate.Value).TotalSeconds
-                                        };
-
-                                        existingEmployee.ReaderDataDtos.Add(newReaderData);
+                                            EndDate = null,
+                                            Duration = null
+                                        });
+                                        continue;
                                     }
-                                    else if (readerDataDto.EndDate.HasValue && !readerDataDto.StartDate.HasValue)
-                                    {
-                                        var defaultStartDate = readerDataDto.EndDate.Value.Date.Add(new TimeSpan(00, 00, 00)); // Varsayılan saat 23:59:59
-                                        var newReaderData = new ReaderDataDto
-                                        {
-                                            StartDate = defaultStartDate,
-                                            EndDate = readerDataDto.EndDate,
-                                            Duration = readerDataDto.Duration > 18000 ? (int?)null : (int?)(readerDataDto.EndDate.Value - defaultStartDate).TotalSeconds
-                                        };
-                                        if (newReaderData.Duration>18000)
-                                        {
-                                            newReaderData.Duration = null;
-                                        }
-                                        existingEmployee.ReaderDataDtos.Add(newReaderData);
 
+                                    // Diğer durumlar için normal ekleme işlemi
+                                    var duration = (int)(readerDataDto.EndDate.Value - readerDataDto.StartDate.Value).TotalSeconds;
+
+                                    if (duration > 36000)
+                                    {
+                                        existingEmployee.ReaderDataDtos.Add(new ReaderDataDto
+                                        {
+                                            StartDate = readerDataDto.StartDate,
+                                            EndDate = readerDataDto.EndDate,
+                                            Duration = null
+                                        });
                                     }
                                     else
                                     {
-                                        var newReaderData = new ReaderDataDto
+                                        existingEmployee.ReaderDataDtos.Add(new ReaderDataDto
                                         {
                                             StartDate = readerDataDto.StartDate,
                                             EndDate = readerDataDto.EndDate,
-                                            Duration = readerDataDto.StartDate.HasValue && readerDataDto.EndDate.HasValue
-                                                ? (int)(readerDataDto.EndDate.Value - readerDataDto.StartDate.Value).TotalSeconds
-                                                : 0
-                                        };
-
-                                        existingEmployee.ReaderDataDtos.Add(newReaderData);
+                                            Duration = duration
+                                        });
                                     }
+
+                                    if (!readerDataDto.StartDate.HasValue && readerDataDto.EndDate.HasValue)
+                                    {
+                                        var previousDayData = existingEmployee.ReaderDataDtos.FirstOrDefault(rd =>
+                                            rd.EndDate.HasValue && !rd.StartDate.HasValue &&
+                                            rd.EndDate.Value.Date == readerDataDto.EndDate.Value.Date &&
+                                            rd.EndDate.Value.TimeOfDay != TimeSpan.Zero);
+
+                                        if (previousDayData != null)
+                                        {
+                                            // Önceki günün verilerini kullanarak eksik StartDate'i doldur
+                                            readerDataDto.StartDate = previousDayData.EndDate.Value.Date;
+
+                                            // Duration hesaplama
+                                            var dayDuration = (int)(readerDataDto.EndDate - readerDataDto.StartDate).Value.TotalSeconds;
+
+                                            // Duration 18000 saniyeden büyükse, StartDate'i null olarak bırak
+                                            if (dayDuration > 36000)
+                                            {
+                                                readerDataDto.StartDate = null;
+                                                readerDataDto.Duration = null;
+                                            }
+                                            else
+                                            {
+                                                readerDataDto.Duration = dayDuration;
+                                            }
+                                        }
+                                    }
+
                                 }
                             }
+                           
 
                             _dbContext.SaveChanges();
 
+
+                            _remoteEmployeeDal.UpdateDataForSameId();
 
 
 
@@ -439,9 +447,6 @@ namespace Business.Concrete
                 return new ErrorResult($"Bir hata oluştu: {ex.Message}");
             }
         }
-
-
-
 
 
     }

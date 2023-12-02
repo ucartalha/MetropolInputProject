@@ -148,6 +148,17 @@ namespace WebAPI.Controllers
             return BadRequest(result);
         }
 
+        [HttpGet("getlatesbymonth")]
+        public IActionResult GetLatesByMonth(int month, int year)
+        {
+            var result=_services.GetLatesByMonth(month, year);
+            if (result.Success)
+            {
+                return Ok(new { Message = result.Message, Data = result.Data });
+            }
+            return BadRequest(result);
+        }
+
     }
 }
 
