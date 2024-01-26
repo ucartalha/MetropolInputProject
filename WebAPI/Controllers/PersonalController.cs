@@ -1,6 +1,7 @@
 ﻿using Business.Abstract;
 using Business.Concrete;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
 
 namespace WebAPI.Controllers
 {
@@ -26,6 +27,17 @@ namespace WebAPI.Controllers
             {
                 return BadRequest(result.Message); // Hata durumunda hata mesajını döndür
             }
+        }
+
+        [HttpGet("TopPersonalLastMonth")]
+        public IActionResult TopPersonalLastMonth(int month , int year)
+        {
+            var result = _services.ProcessMonthlyAverageBestPersonal(month , year);
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result.Message);
         }
 
         [HttpGet("get-all-employees")]

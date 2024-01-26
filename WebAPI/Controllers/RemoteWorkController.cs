@@ -18,9 +18,17 @@ namespace WebAPI.Controllers
         {
             try
             {
+                if (file.Length==10* 1024 *1024)
+                {
+                    return BadRequest("Dosya boyutu 10 Megabayt'tan büyük olamaz");
+                }
                 ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
-                _services.Add(file);
-                return Ok("File uploaded successfully.");
+                var result= _services.Add(file);
+                if (result.Success)
+                {
+                    return Ok("File uploaded successfully.");
+                }
+                return BadRequest("Dosya formatı uygun değil" + result.Message);
             }
             catch (ArgumentNullException ex)
             {

@@ -16,11 +16,15 @@ namespace DataAccess.Abstract
     {
         public IResult DeleteByDateRange(DateTime startDate, DateTime endDate);
         public List<PersonalEmployeeDto> GetEmployeeDetail(int Id);
-
         public List<TimeSpan> GetWorkingHoursByName(int Id,int month,int year);
         public List<LateEmployeeGroupDto> GetLates(int month,int week,int year);
+        public List<LateEmployeeGroupDto> GetLatesWithDepartment(int month,int week,int year,string[] Department);
 
         public void UpdateById(int id,string NewName);
         public List<LateEmployeeGroupDto> GetLatesByMonth(int month, int year);
+        public List<int> GetAllIds();
+        public List<PersonalNameDto> GetNameWithId(int id);
+        
+
     }
 }

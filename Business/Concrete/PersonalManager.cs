@@ -68,7 +68,7 @@ namespace Business.Concrete
         {
             List<Personal> personalList = new List<Personal>();
             DateTime currentDate = DateTime.Now;
-            int currentYear = currentDate.Year;
+            int currentYear = year;
             int previousMonth1 = month - 1;
             int previousMonth2 = month - 2;
 
@@ -118,34 +118,26 @@ namespace Business.Concrete
                     List<int> totalDuration = new List<int>();
                     List<int> monthlyDuration = new List<int>();
 
-
+                    
                     while (resultIndex < result.Count)
                     {
+                        
+                        {
+
+                        }
                         Personal personal = new Personal
                         {
                             Id = Id,
                             AverageHour = monthlyAverage,
                             RemoteHour = result[resultIndex],
-                            Date = new DateTime(currentYear, targetMonth, 1)
+                            Date = new DateTime(currentYear, targetMonth, 1,0,0,0)
+                        
                         };
 
                         personalList.Add(personal);
                         resultIndex++;
                     }
 
-
-
-
-
-
-                    // Personal nesnesini oluştur ve verileri doldur
-
-                    //personal.Id = Id;
-                    //    personal.AverageHour = monthlyAverage;
-                    //    personal.RemoteHour = averageDuration != 0 ? averageDuration : 0;
-                    //    personal.Date = new DateTime(currentYear, targetMonth, 1);
-
-                    //    personalList.Add(personal);
 
                 }
             }
@@ -160,6 +152,85 @@ namespace Business.Concrete
                 return new ErrorDataResult<List<Personal>>("İsimle eşleşen çalışma saatleri bulunamadı.");
             }
         }
+
+        public IDataResult<List<Personal>> ProcessMonthlyAverageBestPersonal(int month, int year)
+        {
+            List<Personal> personalList = new List<Personal>();
+            DateTime currentDate = DateTime.Now;
+            int currentYear = year;
+            int previousMonth1 = month - 1;
+            int previousMonth2 = month - 2;
+
+            if (previousMonth1 <= 0)
+            {
+                previousMonth1 += 12;
+                currentYear--;
+            }
+
+            if (previousMonth2 <= 0)
+            {
+                previousMonth2 += 12;
+                currentYear--;
+            }
+
+            List<int> allEmployeeIds = _employeeDal.GetAllIds();
+
+            foreach (var employeeId in allEmployeeIds)
+            {
+                string name = null;
+                string surname = null;
+                List<TimeSpan> workingHours = _employeeDal.GetWorkingHoursByName(employeeId, month, year);
+                var emp = _employeeDal.GetNameWithId(employeeId).ToList();
+                foreach (var item in emp)
+                {
+                    name = item.Name;
+                    surname = item.Surname;
+                }
+                if (workingHours.Count() > 0)
+                {
+                    // Ay içindeki toplam süreyi hesapla
+                    TimeSpan totalHours = TimeSpan.Zero;
+                    foreach (TimeSpan hour in workingHours)
+                    {
+                        totalHours += hour;
+                    }
+
+                    // Ortalama saat hesapla
+                    TimeSpan monthlyAverage = default(TimeSpan);
+                    if (totalHours.Ticks != 0 || workingHours.Count() != 0)
+                    {
+                        monthlyAverage = TimeSpan.FromTicks(totalHours.Ticks / workingHours.Count);
+                    }
+                    
+                    
+                    Personal personal = new Personal
+                    {
+                        Id = employeeId,
+                        Name = name +" " +surname,
+                        AverageHour = monthlyAverage,
+                        Date = new DateTime(currentYear, month, 1)
+                    };
+
+                    personalList.Add(personal);
+                    
+                }
+            }
+
+            // En yüksek ortalama saate sahip olan ilk 5 personeli seç
+            var top5PersonalList = personalList.OrderByDescending(p => p.AverageHour).Take(5).ToList();
+
+            if (top5PersonalList.Count > 0)
+            {
+                return new SuccessDataResult<List<Personal>>(top5PersonalList, "Önceki 3 ayın en yüksek ortalama saatli personeller başarıyla bulundu.");
+            }
+            else
+            {
+                return new ErrorDataResult<List<Personal>>("Çalışma saatleri bulunan personel yok.");
+            }
+        }
+
+
+
 
     }
 }

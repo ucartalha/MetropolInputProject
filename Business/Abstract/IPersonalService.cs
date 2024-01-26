@@ -12,6 +12,7 @@ namespace Business.Abstract
     { 
         IDataResult<List<Personal>> GetAll();
         public IDataResult<List<Personal>> ProcessMonthlyAverage(int Id, int month, int year);
+        public IDataResult<List<Personal>> ProcessMonthlyAverageBestPersonal(int month, int year);
         public IDataResult<List<RemoteEmployee>> GetAllEmployees();
     }
 }

@@ -93,7 +93,7 @@ namespace Business.Concrete
                                 }
                                 else
                                 {
-                                    // Uygun olmayan format durumunda işlemler yapılabilir.
+                                    return new ErrorDataResult<List<ReaderDataDto>>("Uygun olmayan dosya formatı");
                                 }
                              
 

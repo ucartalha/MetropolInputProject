@@ -138,8 +138,7 @@ namespace DataAccess.Concrete
                     .ToList();
 
                 return workingHours;
-
-                
+ 
             }
         }
 
@@ -403,6 +402,146 @@ namespace DataAccess.Concrete
                     context.SaveChanges();
                 }
 
+            }
+        }
+
+        public List<LateEmployeeGroupDto> GetLatesWithDepartment(int month, int week, int year, string[] Department)
+        {
+            using (InputContext context = new InputContext())
+            {
+                var lateEmployees = context.EmployeeRecords.Where(x => x.Date.Month == month && x.Date.Year == year).ToList();
+                DateTime currentDate = new DateTime(year, month, 1);
+
+                // Hafta başlangıç ve bitiş tarihlerini hesapla
+                DateTime startOfWeek = currentDate.AddDays((week - 1) * 7 - (int)currentDate.DayOfWeek + (int)DayOfWeek.Monday);
+                DateTime endOfWeek = startOfWeek.AddDays(6);
+                var StartingTime = TimeSpan.Parse("08:30:00");
+                // Geç kalanları haftanın başlangıç ve bitiş tarihlerine göre filtrele
+                var lateEmployeesInWeek = lateEmployees
+                    .Where(x => x.Date >= startOfWeek && x.Date <= endOfWeek && Department.Contains(x.Department))
+                    .Select(e => new LateEmployeeDto
+                    {
+                        FullName = e.Name + " " + e.SurName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        Id = e.RemoteEmployeeId,
+                        WorkingHour = e.WorkingHour,
+                        IsLate = false,
+                        IsFullWork = true,
+                    })
+                    .ToList();
+
+                var lateEmployeesAfter8AM = lateEmployeesInWeek //geç kaldı fakat tam çalıştı
+     .Where(x => x.FirstRecord != null && x.FirstRecord.TimeOfDay > StartingTime && x.WorkingHour.TotalMinutes > 570)
+     .Select(e => new LateEmployeeDto
+     {
+         Id = e.Id,
+         FullName = e.FullName,
+         FirstRecord = e.FirstRecord,
+         LastRecord = e.LastRecord,
+         WorkingHour = e.WorkingHour,
+         // O günün tarihini al
+         IsLate = true, // Geç kaldığı için IsLate'i true yap
+         IsFullWork = true, // Tam olarak çalıştılar
+         ProcessTemp = 1
+     })
+     .ToList();
+
+                var employeesLessThan1130Mins = lateEmployeesInWeek //geç kaldı tam çalışmadı
+                    .Where(x => x.WorkingHour.TotalMinutes < 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay > StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = true, // Geç kalmadılar ama çalışma süresi yetersiz
+                        IsFullWork = false, // 9:30'dan az çalıştılar
+                        ProcessTemp = 2
+                    })
+                    .ToList();
+
+                var employeesLessWorkMins = lateEmployeesInWeek //geç kalmadı ama tam çalıştı
+                    .Where(x => x.WorkingHour.TotalMinutes < 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay < StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        LastOfDate = e.LastOfDate,
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = false, // Geç kalmadılar ama çalışma süresi yetersiz
+                        IsFullWork = false, // 9:30'dan az çalıştılar
+                        ProcessTemp = 3
+
+                    })
+                    .ToList();
+
+                var employeeSuccess = lateEmployeesInWeek
+                    .Where(x => x.WorkingHour.TotalMinutes > 570 && x.FirstRecord != null && x.FirstRecord.TimeOfDay < StartingTime)
+                    .Select(e => new LateEmployeeDto
+                    {
+                        Id = e.Id,
+                        FullName = e.FullName,
+                        FirstRecord = e.FirstRecord,
+                        LastRecord = e.LastRecord,
+                        LastOfDate = e.LastOfDate,
+                        WorkingHour = e.WorkingHour,
+
+                        IsLate = false,
+                        IsFullWork = true,
+                        ProcessTemp = 4
+                    }).ToList();
+
+                // İki kategoriyi ayrı ayrı listelerde tutun
+                var lateAndShortWorkEmployees = new List<LateEmployeeDto>();
+                lateAndShortWorkEmployees.AddRange(lateEmployeesAfter8AM);
+                lateAndShortWorkEmployees.AddRange(employeesLessThan1130Mins);
+                lateAndShortWorkEmployees.AddRange(employeesLessWorkMins);
+                lateAndShortWorkEmployees.AddRange(employeeSuccess);
+
+                var groupedLateEmployees = lateAndShortWorkEmployees
+        .GroupBy(e => e.ProcessTemp)
+        .Select(group => new LateEmployeeGroupDto
+        {
+            ProcessTemp = group.Key,
+            Employees = group.ToList()
+        })
+        .ToList();
+
+                return groupedLateEmployees;
+            }
+        }
+
+        public List<int> GetAllIds()
+        {
+            using (InputContext context=new InputContext())
+            {
+                List<int> result = context.EmployeeDtos.Where(x=>x.Id!=null).Select(x=>x.Id).ToList();
+
+
+                return result;
+            }
+        }
+
+        public List<PersonalNameDto> GetNameWithId(int id)
+        {
+            using (InputContext context =new InputContext())
+            {
+                var result = context.EmployeeDtos.Where(x => x.Id == id).Select(
+                    e => new PersonalNameDto
+                    {
+                        Id = e.Id,
+                        Name= e.FirstName,
+                        Surname = e.LastName
+                    }
+                    ).ToList();
+                return result;
             }
         }
     }

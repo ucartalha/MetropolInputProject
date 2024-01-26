@@ -16,12 +16,12 @@ namespace WebAPI.Controllers
         {
             _services = service;
         }
-         
 
-        [HttpGet("getdetails")] 
+
+        [HttpGet("getdetails")]
         public IActionResult Get(int Id)
         {
-            var result=_services.GetPersonalDetails(Id);
+            var result = _services.GetPersonalDetails(Id);
             if (result.Success)
             {
                 return Ok(result);
@@ -35,10 +35,14 @@ namespace WebAPI.Controllers
             try
             {
                 ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
-                
-                _services.Add(file);
-                
-                return Ok("File uploaded successfully.");
+
+                var result = _services.Add(file);
+
+                if (result.Success)
+                {
+                    return Ok("File uploaded successfully.");
+                }
+                return BadRequest(result.Message);
             }
             catch (ArgumentNullException ex)
             {
@@ -52,27 +56,27 @@ namespace WebAPI.Controllers
         }
         private bool DosyaZatenVar(string dosyaAdi)
         {
-            
+
             return false; // Dosya yoksa varsayılan olarak false döndürüldü.
         }
 
         [HttpPost("deletebydate")]
         public IActionResult DeleteByDate(DateTime startDate, DateTime endDate)
         {
-            if(_services.DeleteByDateRange(startDate, endDate).Success)
+            if (_services.DeleteByDateRange(startDate, endDate).Success)
             {
                 return Ok();
             }
             return BadRequest();
         }
         [HttpGet("getbyaveragehour")]
-        public IActionResult GetAverageHour(string name,double average)
+        public IActionResult GetAverageHour(string name, double average)
         {
-            if (_services.GetAverageHour(name,average).Success)
+            if (_services.GetAverageHour(name, average).Success)
             {
                 return Ok();
             }
-                
+
             return BadRequest();
         }
         [HttpGet("getbyname")]
@@ -86,7 +90,7 @@ namespace WebAPI.Controllers
             return BadRequest();
         }
         [HttpGet("getlates")]
-        public IActionResult GetLates(int month,int week, int year)
+        public IActionResult GetLates(int month, int week, int year)
         {
             var result = _services.GetLates(month, week, year);
             //if (result != null && result.Data != null && result.Data.Count > 0)
@@ -143,7 +147,7 @@ namespace WebAPI.Controllers
             //});
             if (result.Success)
             {
-                return Ok(new {Message=result.Message, Data=result.Data});
+                return Ok(new { Message = result.Message, Data = result.Data });
             }
             return BadRequest(result);
         }
@@ -151,7 +155,18 @@ namespace WebAPI.Controllers
         [HttpGet("getlatesbymonth")]
         public IActionResult GetLatesByMonth(int month, int year)
         {
-            var result=_services.GetLatesByMonth(month, year);
+            var result = _services.GetLatesByMonth(month, year);
+            if (result.Success)
+            {
+                return Ok(new { Message = result.Message, Data = result.Data });
+            }
+            return BadRequest(result);
+        }
+        [HttpGet("getlateswithdepartment")]
+        public IActionResult GetLatesWithDepartment(int month, int week, int year, string Department)
+        {
+            var arrDep = Department.Split(',');
+            var result = _services.GetLatesWithDepartment(month, week, year, arrDep);
             if (result.Success)
             {
                 return Ok(new { Message = result.Message, Data = result.Data });

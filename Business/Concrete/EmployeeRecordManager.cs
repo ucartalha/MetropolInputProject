@@ -401,5 +401,32 @@ namespace Business.Concrete
             }
             return new ErrorDataResult<List<LateEmployeeGroupDto>>("Geç kalan veya 11.30 saatten az çalışan çalışan yok");
         }
+
+        public IDataResult<List<LateEmployeeGroupDto>> GetLatesWithDepartment(int month, int week, int year, string[] Department)
+        {
+            var result= _employeeDal.GetLatesWithDepartment(month,week, year, Department);
+            if (result!=null && result.Count>0)
+            {
+                foreach (var group in result)
+                {
+                    string message = GetMessageForProcessTemp(group.ProcessTemp);
+                    group.Message = message;  
+                }
+                return new SuccessDataResult<List<LateEmployeeGroupDto>>(result, "Geç Kalanlar Departmana göre Listelendi");
+            }
+            else if (Department.Contains("0"))
+            {
+                result = _employeeDal.GetLates(month, week, year);
+                foreach (var group in result)
+                {
+                    string message = GetMessageForProcessTemp(group.ProcessTemp);
+                    group.Message = message;
+                }
+                return new SuccessDataResult<List<LateEmployeeGroupDto>>(result, "Tüm Geç Kalanlar Listelendi");
+
+
+            }
+            return new ErrorDataResult<List<LateEmployeeGroupDto>>(result,"İlgili Departmana ait bir çalışan bulunamadı");
+        }
     }
 }
