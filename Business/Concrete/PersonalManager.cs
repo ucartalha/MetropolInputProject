@@ -71,18 +71,15 @@ namespace Business.Concrete
             int currentYear = year;
             int previousMonth1 = month - 1;
             int previousMonth2 = month - 2;
-
+            int previousYear = year - 1;
             if (previousMonth1 <= 0)
             {
                 previousMonth1 += 12;
-                currentYear--;
+                previousMonth2 += 12;
+                currentYear = previousYear;
             }
 
-            if (previousMonth2 <= 0)
-            {
-                previousMonth2 += 12;
-                currentYear--;
-            }
+            
             List<int> result = new List<int>();
             int resultIndex = 0;
             for (int i = 0; i < 3; i++)
@@ -91,6 +88,11 @@ namespace Business.Concrete
                 if (targetMonth <= 0)
                 {
                     targetMonth += 12;
+                    currentYear=previousYear;
+                }
+                if (month==1)
+                {
+                    year = previousYear + 1;
                 }
                 result = _remoteEmployee.GetDurationByName(Id, targetMonth, year, result);
                 List<TimeSpan> workingHours = _employeeDal.GetWorkingHoursByName(Id, targetMonth, year);
@@ -216,7 +218,7 @@ namespace Business.Concrete
                 }
             }
 
-            // En yüksek ortalama saate sahip olan ilk 5 personeli seç
+            // En yüksek ortalama saate sahip olan ilk 5 personel
             var top5PersonalList = personalList.OrderByDescending(p => p.AverageHour).Take(5).ToList();
 
             if (top5PersonalList.Count > 0)

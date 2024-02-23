@@ -383,6 +383,79 @@ namespace Business.Concrete
             return new SuccessDataResult<List<CombinedDataDto>>(_remoteEmployeeDal.GetAllWithLogs());
         }
 
+        //public IDataResult<List<CombinedDataDto>> GetAllWithoutNull()
+        //{
+        //    var result = _remoteEmployeeDal.GetAllWithLogs();
+        //    var SumDuration = new List<CombinedDataDto>();
+
+        //    foreach (var item in result)
+        //    {
+        //        foreach (var item2 in result)
+        //        {
+        //            if (item.Id==item2.Id &&item.StartDate.Value.Day==item2.StartDate.Value.Day)
+        //            {
+        //                item2.CalculatedDuration += item.CalculatedDuration;
+
+        //            }
+        //            SumDuration.Add(item2);
+        //        }
+        //    }
+
+        //    return new SuccessDataResult<List<CombinedDataDto>>("");
+        //}
+
+        public IDataResult<List<CombinedDataDto>> GetAllWithoutNull()
+        {
+            var result = _remoteEmployeeDal.GetAllWithLogs();
+
+            // Dictionary oluşturulması (Anahtar: ID, Değer: Tarih ve Süre)
+            var durationDictionary = new Dictionary<int, Dictionary<DateTime, int>>();
+
+            foreach (var item in result)
+            {
+                
+                if (!durationDictionary.ContainsKey(item.RemoteEmployeeDtoId))
+                {
+                    durationDictionary[item.RemoteEmployeeDtoId] = new Dictionary<DateTime, int>();
+                }
+
+                var key = (item.StartDate ?? item.EndDate).GetValueOrDefault().Date;
+
+                
+                if (durationDictionary[item.RemoteEmployeeDtoId].ContainsKey(key))
+                {
+                    durationDictionary[item.RemoteEmployeeDtoId][key] += item.CalculatedDuration ?? 0;
+                }
+                
+                else
+                {
+                    durationDictionary[item.RemoteEmployeeDtoId][key] = item.CalculatedDuration ?? 0;
+                }
+            }
+
+            
+            var combinedDataList = new List<CombinedDataDto>();
+            foreach (var employeeId in durationDictionary.Keys)
+            {
+                foreach (var kvp in durationDictionary[employeeId])
+                {
+                    // Her bir öğe için name ve surname bilgilerini ekleyin
+                    var combinedDataDto = new CombinedDataDto
+                    {
+                        RemoteEmployeeDtoId = employeeId,
+                        StartDate = kvp.Key,
+                        CalculatedDuration = kvp.Value,
+                        FirstName = result.FirstOrDefault(x => x.RemoteEmployeeDtoId == employeeId)?.FirstName,
+                        LastName = result.FirstOrDefault(x => x.RemoteEmployeeDtoId == employeeId)?.LastName
+                    };
+                    combinedDataList.Add(combinedDataDto);
+                }
+            }
+
+            return new SuccessDataResult<List<CombinedDataDto>>(combinedDataList);
+        }
+
+
         public IResult UpdateReaderData(int readerDataId, DateTime? newStartDate, DateTime? newEndDate)
         {
             try

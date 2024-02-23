@@ -1,4 +1,5 @@
 ﻿using Core.DataAccess.EntityFramework;
+using Core.Utilites.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
@@ -37,6 +38,7 @@ namespace DataAccess.Concrete
 
         public List<int> GetDurationByName(int Id, int month, int year, List<int> result)
         {
+            
             int day = 1;
             int duration2 = 0;
             using (InputContext context = new InputContext())
@@ -50,25 +52,59 @@ namespace DataAccess.Concrete
                 var employeeRecords = context.EmployeeDtos
                     .Include(e => e.ReaderDataDtos)
                     .FirstOrDefault(e => e.Id == Id);
+
+                var distinct2 = employeeRecords.ReaderDataDtos
+     .Where(x => x.StartDate != null&& x.StartDate.Value.Month== month) // StartDate null değilse
+     .DistinctBy(x => x.StartDate.Value.Day) // StartDate'e göre benzersiz olanları al
+     .ToList();
+
+
+                //            var distinctDays = employeeRecords.ReaderDataDtos
+                //.Where(item => item.StartDate.HasValue
+                //               && item.StartDate.Value.Month == month
+                //               && item.StartDate.Value.Year == year
+                //               && item.StartDate.Value.Day != null) // Ek kontrol
+                //.Select(item => item.StartDate?.Day)
+                //.Where(day => day.HasValue) // 
+                //.Distinct()
+                //.ToList();
+                //            if (distinctDays.Count()>0)
+                //            {
+                //                Console.WriteLine("distinct başarılı");
+                //            }
                 if (employeeRecords != null)
                 {
 
                     foreach (var item in employeeRecords.ReaderDataDtos)
                     {
-
+                        //var date1 = item.StartDate.Value.Day;
 
                         if (item.StartDate.HasValue && item.StartDate.Value.Month == month && item.StartDate.Value.Year == year)
                         {
-                            if (item.StartDate.Value != item.StartDate.Value)
+                            if (item.Duration!=null)
                             {
-                                day += 1;
+                                var duration1 = item.Duration;
+                                duration2 += (Int32)duration1;
                             }
-                            var duration1 = item.Duration;
+                           
 
-                            duration2 += (Int32)duration1;
-                        }
+                          
+                            
+                        }                           
+                        
                     }
-                    int averageduration = duration2 / day;
+                    int averageduration;
+                    if (distinct2.Any()) // distinct2 koleksiyonunda en az bir öğe varsa
+                    {
+                        averageduration = duration2 / distinct2.Count();
+                    }
+                    else
+                    {
+                        
+                        averageduration = 0; // Veya başka bir varsayılan değer
+                    }
+
+
                     result.Add(averageduration);
                 }
 
@@ -134,7 +170,7 @@ namespace DataAccess.Concrete
                 {
                     var entriesWithStartDateOnly = employee.ReaderDataDtos
                         .Where(rd => rd.StartDate != null && rd.EndDate != null) // Başlangıç ve bitiş tarihine sahip olanları filtrele
-                        .GroupBy(rd => rd.StartDate) // Başlangıç tarihine göre grupla
+                        .GroupBy(rd => rd.StartDate) 
                         .SelectMany(grp => grp.Skip(1)) // İkinci tarihi olan girişten başlayarak
                         .ToList();
 

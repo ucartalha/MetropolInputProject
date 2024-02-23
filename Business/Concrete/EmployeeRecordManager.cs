@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
-using RestSharp;
+using RestSharp; 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -427,6 +427,41 @@ namespace Business.Concrete
 
             }
             return new ErrorDataResult<List<LateEmployeeGroupDto>>(result,"İlgili Departmana ait bir çalışan bulunamadı");
+        }
+
+        public IDataResult<List<EmployeeRecord>> GetAllItCard()
+        {
+            var result = _employeeDal.GetAll(c => c.Name == "arge");
+            if (result.Count>0)
+            {
+                return new SuccessDataResult<List<EmployeeRecord>>(result, "Misafir Kartları başarıyla sıralandı");
+            }
+            return new ErrorDataResult<List<EmployeeRecord>>(result, "Misafir kartı bulunamadı");
+        }
+
+        public IResult UpdateGuestData(int Id, int empId)
+        {
+            var guestCard = _dbContext.EmployeeRecords.FirstOrDefault(c => c.ID == Id);
+            if (guestCard == null)
+            {
+                return new ErrorResult("Kart Id bulunamadı");
+            }
+            var employee = _dbContext.EmployeeRecords
+    .Where(c => c.RemoteEmployeeId == empId)
+    .OrderByDescending(c => c.Date)
+    .FirstOrDefault();
+
+            if (employee!=null)
+            {
+                guestCard.Name=employee.Name;
+                guestCard.SurName = employee.SurName;
+                guestCard.CardId= employee.CardId;
+                guestCard.RemoteEmployeeId=employee.RemoteEmployeeId;
+                _dbContext.SaveChanges();
+                return new SuccessResult("Güncellendi");
+            }
+            return new ErrorResult("Güncelleme sırasında bir hata oluştu");
+
         }
     }
 }

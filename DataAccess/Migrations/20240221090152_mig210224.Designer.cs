@@ -4,6 +4,7 @@ using DataAccess.Concrete;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(InputContext))]
-    partial class InputContextModelSnapshot : ModelSnapshot
+    [Migration("20240221090152_mig210224")]
+    partial class mig210224
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,46 +76,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("RemoteEmployeeId");
 
                     b.ToTable("EmployeeRecords");
-                });
-
-            modelBuilder.Entity("Entities.Concrete.FinalVpnEmployee", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<TimeSpan>("Duration")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime>("FirstRecord")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("LastRecord")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RemoteEmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SurName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FinalVpnEmployees");
                 });
 
             modelBuilder.Entity("Entities.Concrete.OverShift", b =>
@@ -259,10 +222,10 @@ namespace DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Bytesin")
+                    b.Property<int>("Bytesin")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Bytesout")
+                    b.Property<int>("Bytesout")
                         .HasColumnType("int");
 
                     b.Property<int>("Duration")
@@ -272,7 +235,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("FirstRecord")
+                    b.Property<DateTime>("FirstRecord")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Group")
@@ -283,7 +246,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("LastRecord")
+                    b.Property<DateTime>("LastRecord")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("LogDate")

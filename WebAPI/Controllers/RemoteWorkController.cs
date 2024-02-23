@@ -75,5 +75,16 @@ namespace WebAPI.Controllers
                 return BadRequest(new { success = false, message = "Bir hata oluştu: "});
             }
             }
+
+        [HttpGet("GetAllwithSumDuration")]
+        public IActionResult GetAllWithSumDuration()
+        {
+            var result = _services.GetAllWithoutNull();
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

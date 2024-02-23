@@ -13,7 +13,8 @@ namespace DataAccess.Concrete
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=DESKTOP-4KV7ID6;Database=InputProject;TrustServerCertificate=True;Trusted_Connection=true;MultipleActiveResultSets=true", options=>options.MigrationsAssembly("DataAccess"));
+            //optionsBuilder.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=inputdb;TrustServerCertificate=True;MultipleActiveResultSets=true;", options => options.MigrationsAssembly("DataAccess"));
+            optionsBuilder.UseSqlServer(@"Server=10.100.14.20,1433;Database=PersonnelTrackingSystemDb;TrustServerCertificate=True;MultipleActiveResultSets=true;user id=extadmn;password=Ea9130+!;", options => options.MigrationsAssembly("DataAccess"));
         }
 
         public DbSet<EmployeeRecord> EmployeeRecords { get; set; }
@@ -27,6 +28,9 @@ namespace DataAccess.Concrete
         public DbSet<RemoteEmployee> EmployeeDtos { get; set; }
         public DbSet<ReaderDataDto> ReaderDataDtos { get; set; }
 
-        
+        public DbSet<VpnEmployee> VpnEmployees { get; set; }
+        public DbSet<FinalVpnEmployee> FinalVpnEmployees { get; set; }
+
+
     }
 }

@@ -24,5 +24,7 @@ namespace Business.Abstract
         IDataResult<List<LateEmployeeGroupDto>> GetLates(int month, int week, int year);
         IDataResult<List<LateEmployeeGroupDto>> GetLatesByMonth(int month, int year);
         IDataResult<List<LateEmployeeGroupDto>> GetLatesWithDepartment(int month, int week, int year, string[] Department);
+        IDataResult<List<EmployeeRecord>> GetAllItCard();
+        public IResult UpdateGuestData(int Id, int empId);
     }
 }

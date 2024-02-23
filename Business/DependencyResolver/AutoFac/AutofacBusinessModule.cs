@@ -38,6 +38,9 @@ namespace Business.DependencyResolver.AutoFac
             builder.RegisterType<OverShiftManager>().As<IOverShifService>().SingleInstance();
             builder.RegisterType<EfOverShiftDal>().As<IOverShiftDal>().SingleInstance();
 
+            builder.RegisterType<VpnEmployeeManager>().As<IVpnEmployeeService>().SingleInstance();
+            builder.RegisterType<EfVpnEmployeeDal>().As<IVpnEmployeeDal>().SingleInstance();
+
             builder.RegisterType<InputContext>().AsSelf();
 
             builder.RegisterType<FileHelperManager>().As<IFileHelper>().SingleInstance();

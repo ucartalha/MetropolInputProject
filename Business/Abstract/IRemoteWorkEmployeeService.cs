@@ -16,6 +16,7 @@ namespace Business.Abstract
         IResult Add(IFormFile file);
         
         IDataResult<List<CombinedDataDto>> GetAllWithLogs();
+        IDataResult<List<CombinedDataDto>> GetAllWithoutNull();
         public IResult UpdateReaderData(int readerDataId, DateTime? newStartDate, DateTime? newEndDate);
     }
 }

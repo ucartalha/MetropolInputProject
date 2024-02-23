@@ -173,6 +173,33 @@ namespace WebAPI.Controllers
             }
             return BadRequest(result);
         }
+        [HttpGet("gelallıtcards")]
+        public IActionResult GetAllItCards()
+        {
+            var result = _services.GetAllItCard();
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        [HttpPost("updateguestcard")]
+        public IActionResult UpdateGuestCard(int id, int employeeid)
+        {
+            try
+            {
+                var result = _services.UpdateGuestData(id, employeeid);
+                if (result.Success)
+                {
+                    return Ok(new { success = true, message = "Veri başarıyla güncellendi." });
+                }
+                return BadRequest(new { success = false, message = result.Message });
+            }
+            catch
+            {
+                return BadRequest(new { success = false, message = "Bir hata oluştu: " });
+            }
+        }
 
     }
 }
